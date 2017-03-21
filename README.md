@@ -8,6 +8,7 @@ This README would normally document whatever steps are necessary to get your app
 * entrada o input multivariable http://stackoverflow.com/questions/40331510/how-to-stack-multiple-lstm-in-keras
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 * recurrent layer in keras https://keras.io/layers/recurrent/
+* Ejemplos tomados de este enlace http://machinelearningmastery.com/time-series-prediction-lstm-recurrent-neural-networks-python-keras/
 ### How do I get set up? ###
 
 * Summary of set up
