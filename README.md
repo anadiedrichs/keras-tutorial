@@ -7,7 +7,7 @@ This README would normally document whatever steps are necessary to get your app
 * LSTM en KERAS https://keras.io/getting-started/sequential-model-guide/
 * entrada o input multivariable http://stackoverflow.com/questions/40331510/how-to-stack-multiple-lstm-in-keras
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
-
+* recurrent layer in keras https://keras.io/layers/recurrent/
 ### How do I get set up? ###
 
 * Summary of set up
