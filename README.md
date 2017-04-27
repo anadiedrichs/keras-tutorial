@@ -12,8 +12,13 @@ Este es un repositorio con código de ejemplos sobre keras o tensorflow para LST
 * entrada o input multivariable http://stackoverflow.com/questions/40331510/how-to-stack-multiple-lstm-in-keras
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 * recurrent layer in keras https://keras.io/layers/recurrent/
-* Ejemplos tomados de este enlace http://machinelearningmastery.com/time-series-prediction-lstm-recurrent-neural-networks-python-keras/
+* channels dimension for timeseries
+### keras examples ###
 
+* boston housing regression example https://github.com/benbusse/keras-housing-regression/blob/master/keras-housing-regression.ipynb
+* keras intel desafio kaggle para clasificar en tres tipos de cervix, imagenes https://www.kaggle.com/pierretisseur/intel-mobileodt-cervical-cancer-screening/keras-intel/code
+* Ejemplos tomados de este enlace http://machinelearningmastery.com/time-series-prediction-lstm-recurrent-neural-networks-python-keras/
+* Time series prediction with multiple sequence input https://groups.google.com/forum/#!searchin/keras-users/time$20series|sort:relevance/keras-users/9GsDwkSdqBg/2BVSits77yEJ
 
 ### REGRESSION IN KERAS ###
 
