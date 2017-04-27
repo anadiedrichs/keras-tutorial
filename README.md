@@ -4,6 +4,10 @@ This README would normally document whatever steps are necessary to get your app
 
 ### What is this repository for? ###
 
+Este es un repositorio con código de ejemplos sobre keras o tensorflow para LSTM, GRU, RNN.
+
+### Some links of interest ###
+
 * LSTM en KERAS https://keras.io/getting-started/sequential-model-guide/
 * entrada o input multivariable http://stackoverflow.com/questions/40331510/how-to-stack-multiple-lstm-in-keras
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
@@ -11,9 +15,9 @@ This README would normally document whatever steps are necessary to get your app
 * Ejemplos tomados de este enlace http://machinelearningmastery.com/time-series-prediction-lstm-recurrent-neural-networks-python-keras/
 
 
-### REGRESSION IN KERAS 
+### REGRESSION IN KERAS ###
 
-### ABOUT INPUT SHAPE
+### ABOUT INPUT SHAPE ###
 
 input_shape=(1, 1)
 
@@ -25,7 +29,7 @@ Your input has to be a list where each array has the batch size as the first dim
 
 [(batch_size, 45, 8, 3),(batch_size, 45, 8, 3)...] 
 
-### LAST LAYER + ACTIVATION
+### LAST LAYER + ACTIVATION ###
 
 Whether or not you should use an Activation as the last layer, and what kind of activation, depends on the range of the values you want to output (for instance: if you want to output negative and positive values, don't use ReLU, etc. And never use softmax since it ouputs a probability distribution). 
 
