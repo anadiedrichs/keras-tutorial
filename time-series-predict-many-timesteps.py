@@ -1,3 +1,5 @@
+# codigo extraido de https://groups.google.com/forum/#!msg/keras-users/9GsDwkSdqBg/kV1Ep9E_BAAJ
+
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, TimeDistributedDense
 from keras.layers.embeddings import Embedding
