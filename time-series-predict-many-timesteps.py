@@ -21,7 +21,6 @@ Y = np.asarray([np.sin(X),np.cos(X)]).T
 data = Y
 examples = 500
 y_examples = 500
-
 nb_samples = len(data) - examples - y_examples
 
 
@@ -52,6 +51,5 @@ model.compile(loss='mse', optimizer='rmsprop')
 
 
 # Train
-
 model.fit(input_mat, target_mat, nb_epoch=2)
 print_layer_shapes(model, input_shapes =(input_mat.shape))
