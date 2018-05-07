@@ -1,0 +1,4 @@
+{
+  "message": "unused argument (num_words = 100)",
+  "traceback": ["dataset_mnist(num_words = 100)", "eval(expr, envir, enclos)", "eval(ei, envir)", "training_run(\"mnist_mlp.R\")"]
+}

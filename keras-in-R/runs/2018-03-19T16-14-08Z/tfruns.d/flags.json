@@ -1,0 +1,5 @@
+{
+  "batch_size": 128,
+  "dropout1": 0.4,
+  "dropout2": 0.3
+}

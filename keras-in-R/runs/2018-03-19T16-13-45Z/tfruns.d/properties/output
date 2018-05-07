@@ -1,0 +1,22 @@
+
+> #' Trains a simple deep NN on the MNIST dataset.
+> #'
+> #' Gets to 98.40% test accuracy after 20 epochs
+> #' (there is *a lot* of margin for paramet .... [TRUNCATED] 
+
+> FLAGS <- flags(
++   flag_integer("batch_size", default = 128),
++   flag_numeric("dropout1", default = 0.4),
++   flag_numeric("dropout2", default = 0 .... [TRUNCATED] 
+
+> num_classes <- 10
+
+> epochs <- 30
+
+> print("begin----")
+[1] "begin----"
+
+> #imdb <- dataset_imdb(num_words = 1000)
+> #c(c(train_data, train_labels), c(test_data, test_labels)) %<-% imdb
+> 
+> # the data, shuffled and split b .... [TRUNCATED] 
