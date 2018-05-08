@@ -73,13 +73,13 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
 #' 
 #' ## Preparing the training, validation, and test generators
 library(keras)
-#' Observations will go back 1 day1
-lookback <- 24*6 
+#' Observations will go back 12 hours
+lookback <- 12*6 
 #' Observations will be sampled at one data point per hour.
 step <- 6
-#' Targets will be 6 hours in the future.
-delay <- 6 * 6
-batch_size <- 128
+#' Targets will be 3 hours in the future.
+delay <- 3 * 6
+batch_size <- 32
 train_gen <- generator(
   data,
   lookback = lookback,
@@ -221,7 +221,10 @@ pred_train <- pred_train * std[[2]]
 pred_test <- pred_test * std[[2]]
 
 plot(x=seq(1:nrow(testeo[[2]])),testeo[[2]],type="l",col="red")
-lines(x=seq(1:nrow(testeo[[2]])),pred_test,col="green")
+par(new = TRUE)
+plot(x=seq(1:nrow(testeo[[2]])),pred_test,col="green",ylim=range(c(pred_test,testeo[[2]])), axes = FALSE, xlab = "", ylab = "")
+
+
 
 # RMSE root mean squared error
 rmse <- function(error)
