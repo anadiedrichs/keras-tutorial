@@ -142,7 +142,8 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 1)
 model %>% compile(
   optimizer = optimizer_rmsprop(),
-  loss = "mae"
+  loss = "mae",
+  metrics= c("mean_squared_error")
 )
 history <- model %>% fit_generator(
   train_gen,
