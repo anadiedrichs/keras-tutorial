@@ -1,4 +1,5 @@
 #' # Prediciendo temperatura minima con LSTM GRU
+INIT <- Sys.time()
 setwd("~/phd-repos/keras-tutorial/temperature")
 #' Cargamos el dataset 
 library(tibble)
@@ -13,7 +14,7 @@ datos <- dacc_daily_tmin[,3:9]
 datos[!complete.cases(datos[,4]),4]
 #' No tengo datos perdidos, la podemos dejar.
 #' Quitamos campo radiación para asemejar dataset a los experimentos con bnlearn.
-datos <- datos[-4]
+# datos <- datos[-4]
 #' Filas en el dataset
 nrow(datos)
 
@@ -33,50 +34,9 @@ data <- scale(data, center = mean, scale = std)
 #' IMPORTANTE
 #' Columna que nos interesa predecir. Importante, este variable es utilizada en varios lados.
 predictor.target <<- "junin.temp_min"
-predictor.colIndex <<- 5 # nro de columna en el dataset
+predictor.colIndex <<- 6 # nro de columna en el dataset
 
-#' ## GLOSARY
-#' 
-#' *Mini-batch or batch* A small set of samples (typically between 8 and 128) 
-#' that are processed simultaneously by the model. The number of samples is
-#' often a power of 2, to facilitate memory allocation on GPU. When training, a
-#' mini-batch is used to compute a single gradient-descent update applied to
-#' the weights of the model.
-#' 
-#' ## Generator yielding timeseries samples and their targets
-#' *data* - The original array of floating-point data, which you normalized before
-#' *lookback* How many timesteps back the input data should go.
-#' *delay*  How many timesteps in the future the target should be.
-#' *min_index* and *max_index* —Indices in the data array that delimit which time-steps to draw from. This is useful for keeping a segment of the data for validation and another for testing.
-#' *shuffle* —Whether to shuffle the samples or draw them in chronological order.
-#' *batch_size* —The number of samples per batch.
-#' *step* —The period, in timesteps, at which you sample data. You’ll set it to 6 in order to draw one data point every hour.
-
-generator <- function(data, lookback, delay, min_index, max_index, shuffle = FALSE, batch_size = 128, step = 6) {
-  if (is.null(max_index)) max_index <- nrow(data) - delay - 1
-  i <- min_index + lookback
-  function() {
-    if (shuffle) {
-      rows <- sample(c((min_index+lookback):max_index), size = batch_size)
-    } else {
-      if (i + batch_size >= max_index)
-        i <<- min_index + lookback
-      rows <- c(i:min(i+batch_size, max_index)) # <--- POR QUE??
-      i <<- i + length(rows)
-    }
-    samples <- array(0, dim = c(length(rows),
-                                lookback / step,
-                                dim(data)[[-1]]))
-    targets <- array(0, dim = c(length(rows)))
-    for (j in 1:length(rows)) {
-      indices <- seq(rows[[j]] - lookback, rows[[j]]-1,
-                     length.out = dim(samples)[[2]])
-      samples[j,,] <- data[indices,]
-      targets[[j]] <- data[rows[[j]] + delay,predictor.target]
-    }
-    list(samples, targets)
-  }
-}
+source("generator.R")
 
 #' ## Preparing the training, validation, and test generators
 library(keras)
@@ -86,23 +46,19 @@ lookback <- 2
 #' Observations will be sampled at one data point per hour.
 step <- 1
 #' Targets will be 24 hours in the future.
-delay <- 1
+delay <- 0 # so generator take the next row as the next day
+#delay <- 1
 batch_size <- 32
 MAX_INDEX_TRAIN_GEN <- 3762
 MIN_INDEX_VAL_GEN <- 3763
 MAX_INDEX_VAL_GEN <- 4000
 MIN_INDEX_VAL_TEST <- 4001
-train_gen <- generator(
-  data,
-  lookback = lookback,
-  delay = delay,
-  min_index = 1,
-  max_index = MAX_INDEX_TRAIN_GEN,
-  shuffle = FALSE,
-  step = step,
-  batch_size = batch_size
-)
-val_gen = generator(
+
+train_gen <- generator(data,lookback = lookback, delay = delay,
+  min_index = 1,max_index = MAX_INDEX_TRAIN_GEN,
+  shuffle = FALSE, step = step, batch_size = batch_size)
+
+val_gen <- generator(
   data,
   lookback = lookback,
   delay = delay,
@@ -123,6 +79,7 @@ test_gen <- generator(
 val_steps <- (MAX_INDEX_VAL_GEN - MIN_INDEX_VAL_GEN - lookback) / batch_size
 test_steps <- (nrow(data) - MIN_INDEX_VAL_TEST - lookback) / batch_size
 
+  
 #' ## Computing the common-sense baseline MAE
 #' Simula un predictor aleatorio.
 evaluate_naive_method <- function() {
@@ -147,7 +104,7 @@ evalnaive <- evaluate_naive_method()*std[predictor.target]
 #' Vamos a probar el resultado de los modelos en el conjunto de testeo
 #' 
 #c(samples, targets) %<-% test_gen() #' cambian los datos regresados cada vez que lo llamo
-
+print("======= DENSELY CONNECTED NETWORK =========")
 model <- keras_model_sequential() %>%
   layer_flatten(input_shape = c(lookback / step, dim(data)[-1])) %>%
   layer_dense(units = 32, activation = "relu") %>%
@@ -165,15 +122,26 @@ history <- model %>% fit_generator(
   validation_steps = val_steps
 )
 
+#' Test set generation
+tt <- get_test_set(data, lookback, delay, MIN_INDEX_VAL_TEST, NULL, shuffle = FALSE, batch_size = batch_size, step = step)
+
 #' Ploting results
 plot(history)
 
-ggsave(paste("dacc-junin-Densely-Connect-Model-temp-hum-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+ggsave(paste("dacc-junin-Densely-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
 #evaluate model result
-pred <- predict_generator(model,test_gen,steps = 10,verbose=1)
-results <- model %>% evaluate_generator(test_gen,steps = step)
-evaluation(model, samples, target, "dacc-junin-Densely-Connect-Model-temp-hum-") 
-#'
+# bug reported on https://github.com/rstudio/keras/issues/414
+#pred <- predict_generator(model,test_gen,steps = 10,verbose=1)
+
+pred <- model %>% predict(tt$samples)
+print(model %>% evaluate_generator(test_gen,steps = step))
+evaluation(model=model, 
+           samples=tt$samples, 
+           target=tt$target, 
+           namePlot="dacc-junin-Densely-radiacion-") 
+
+print("======= GRU =========")
+
 #' ## [GRU] A first recurrent baseline
 #' Training and evaluating a model with layer_gru
 model <- keras_model_sequential() %>%
@@ -181,7 +149,8 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 1)
 model %>% compile(
   optimizer = optimizer_rmsprop(),
-  loss = "mae"
+  loss = "mae",
+  metrics = c("mean_squared_error")
 )
 history <- model %>% fit_generator(
   train_gen,
@@ -192,9 +161,14 @@ history <- model %>% fit_generator(
 )
 
 plot(history)
-ggsave(paste("GRU-","history.png",sep=""))  #' TODO SAVE MODEL!!!
-evaluation(model, samples, target, "GRU-") 
-#'
+ggsave(paste("GRU-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+evaluation(model=model, 
+           samples=tt$samples, 
+           target=tt$target, 
+           namePlot="GRU-radiacion-") 
+
+print("======= LSTM =========")
+
 #' ## [LSTM] Training and evaluating a model with layer_lstm
 #' 
 model <- keras_model_sequential() %>%
@@ -202,7 +176,8 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 1)
 model %>% compile(
   optimizer = optimizer_rmsprop(),
-  loss = "mae"
+  loss = "mae",
+  metrics = c("mean_squared_error")
 )
 history <- model %>% fit_generator(
   train_gen,
@@ -214,8 +189,14 @@ history <- model %>% fit_generator(
 
 
 plot(history)
-ggsave(paste("LSTM-","history.png",sep=""))  #' TODO SAVE MODEL!!!
-evaluation(model, samples, target, "LSTM-") 
+ggsave(paste("LSTM-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+evaluation(model=model, 
+           samples=tt$samples, 
+           target=tt$target, 
+           namePlot="LSTM-radiacion-") 
+
+
+print("======= GRU + DROPOUT =========")
 
 #' ## GRU + Dropout. Using recurrent dropout to fight overfitting
 #' Training and evaluating a dropout-regularized GRU-based model
@@ -225,7 +206,8 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 1)
 model %>% compile(
   optimizer = optimizer_rmsprop(),
-  loss = "mae"
+  loss = "mae",
+  metrics = c("mean_squared_error")
 )
 history <- model %>% fit_generator(
   train_gen,
@@ -237,8 +219,14 @@ history <- model %>% fit_generator(
 
 
 plot(history)
-ggsave(paste("GRU-dropout","history.png",sep=""))  #' TODO SAVE MODEL!!!
-evaluation(model, samples, target, "GRU-dropout") 
+ggsave(paste("GRU-dropout-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+evaluation(model=model, 
+           samples=tt$samples, 
+           target=tt$target, 
+           namePlot="GRU-dropout-radiacion-") 
+
+
+print("======= GRU + GRU + DROPOUT =========")
 
 #' ## GRU + GRU + dropout
 #'  Training and evaluating a dropout-regularized, stacked GRU model
@@ -255,7 +243,8 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 1)
 model %>% compile(
   optimizer = optimizer_rmsprop(),
-  loss = "mae"
+  loss = "mae",
+  metrics = c("mean_squared_error")
 )
 history <- model %>% fit_generator(
   train_gen,
@@ -267,8 +256,11 @@ history <- model %>% fit_generator(
 
 
 plot(history)
-ggsave(paste("GRU-GRU-dropout","history.png",sep=""))  #' TODO SAVE MODEL!!!
-evaluation(model, samples, target, "GRU-GRU-dropout") 
+ggsave(paste("GRU-GRU-dropout-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+evaluation(model=model, 
+           samples=tt$samples, 
+           target=tt$target, 
+           namePlot="GRU-GRU-dropout-radiacion-") 
 
 #' # TODO sensitivity, precision, recall, etc
 #' 
@@ -283,4 +275,8 @@ evaluation(model, samples, target, "GRU-GRU-dropout")
 #' * Try using a bigger densely connected regressor on top of the recurrent layers:
 #' that is, a bigger dense layer or even a stack of dense layers.
 #' 
-#' 
+END <- Sys.time()
+
+print(END-INIT)
+
+# Time difference of 16.80466 mins
