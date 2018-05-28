@@ -69,7 +69,7 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
                                 dim(data)[[-1]]))
     targets <- array(0, dim = c(length(rows)))
     for (j in 1:length(rows)) {
-      indices <- seq(rows[[j]] - lookback+1, rows[[j]],
+      indices <- seq(rows[[j]] - lookback, rows[[j]]-1,
                      length.out = dim(samples)[[2]])
       samples[j,,] <- data[indices,]
       targets[[j]] <- data[rows[[j]] + delay,predictor.target]
@@ -146,7 +146,7 @@ evalnaive <- evaluate_naive_method()*std[predictor.target]
 #' 
 #' Vamos a probar el resultado de los modelos en el conjunto de testeo
 #' 
-c(samples, targets) %<-% test_gen() #' cambian los datos regresados cada vez que lo llamo
+#c(samples, targets) %<-% test_gen() #' cambian los datos regresados cada vez que lo llamo
 
 model <- keras_model_sequential() %>%
   layer_flatten(input_shape = c(lookback / step, dim(data)[-1])) %>%
