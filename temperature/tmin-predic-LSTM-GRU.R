@@ -61,7 +61,7 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
     } else {
       if (i + batch_size >= max_index)
         i <<- min_index + lookback
-      rows <- c(i:min(i+batch_size, max_index))
+      rows <- c(i:min(i+batch_size, max_index)) # <--- POR QUE??
       i <<- i + length(rows)
     }
     samples <- array(0, dim = c(length(rows),
@@ -69,7 +69,7 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
                                 dim(data)[[-1]]))
     targets <- array(0, dim = c(length(rows)))
     for (j in 1:length(rows)) {
-      indices <- seq(rows[[j]] - lookback, rows[[j]],
+      indices <- seq(rows[[j]] - lookback+1, rows[[j]],
                      length.out = dim(samples)[[2]])
       samples[j,,] <- data[indices,]
       targets[[j]] <- data[rows[[j]] + delay,predictor.target]
@@ -80,7 +80,7 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
 
 #' ## Preparing the training, validation, and test generators
 library(keras)
-#' Observations will go back lookback days
+#' Observations will go back #lookback days
 lookback <- 2
 #' Observations will be sampled at one data point per hour.
 step <- 1
@@ -88,7 +88,7 @@ step <- 1
 delay <- 1
 batch_size <- 32
 MAX_INDEX_TRAIN_GEN <- 3762
-MIN_INDEX_VAL_GEN <- 3862
+MIN_INDEX_VAL_GEN <- 3763
 MAX_INDEX_VAL_GEN <- 4000
 MIN_INDEX_VAL_TEST <- 4001
 train_gen <- generator(
@@ -97,7 +97,7 @@ train_gen <- generator(
   delay = delay,
   min_index = 1,
   max_index = MAX_INDEX_TRAIN_GEN,
-  shuffle = TRUE,
+  shuffle = FALSE,
   step = step,
   batch_size = batch_size
 )
@@ -145,7 +145,7 @@ evalnaive <- evaluate_naive_method()*std[predictor.target]
 #' 
 #' Vamos a probar el resultado de los modelos en el conjunto de testeo
 #' 
-c(samples, targets) %<-% test_gen()
+c(samples, targets) %<-% test_gen() #' cambian los datos regresados cada vez que lo llamo
 
 model <- keras_model_sequential() %>%
   layer_flatten(input_shape = c(lookback / step, dim(data)[-1])) %>%
