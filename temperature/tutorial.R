@@ -31,6 +31,10 @@ train_data <- data[1:200000,]
 mean <- apply(train_data, 2, mean)
 std <- apply(train_data, 2, sd)
 data <- scale(data, center = mean, scale = std)
+#' Columna que nos interesa predecir
+predictor.target <<- "T (degC)"
+
+
 #' ## GLOSARY
 #' 
 #' *Mini-batch or batch* A small set of samples (typically between 8 and 128) 
@@ -68,7 +72,7 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
       indices <- seq(rows[[j]] - lookback, rows[[j]],
                      length.out = dim(samples)[[2]])
       samples[j,,] <- data[indices,]
-      targets[[j]] <- data[rows[[j]] + delay,2]
+      targets[[j]] <- data[rows[[j]] + delay,predictor.target]
     }
     list(samples, targets)
   }
