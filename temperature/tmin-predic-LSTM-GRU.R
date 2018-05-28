@@ -1,5 +1,5 @@
 #' # Prediciendo temperatura minima con LSTM GRU
-
+setwd("~/phd-repos/keras-tutorial/temperature")
 #' Cargamos el dataset 
 library(tibble)
 library(readr)
@@ -11,26 +11,29 @@ head(dacc_daily_tmin)
 datos <- dacc_daily_tmin[,3:9]
 #' ¿Quito la radiación por tener valores perdidos o extraños?
 datos[!complete.cases(datos[,4]),4]
-#' No tengo datos perdidos, la dejamos.
-
+#' No tengo datos perdidos, la podemos dejar.
+#' Quitamos campo radiación para asemejar dataset a los experimentos con bnlearn.
+datos <- datos[-4]
 #' Filas en el dataset
 nrow(datos)
 
 #' Graficamos la temperatura mínima del dataset, campo `junin.temp_min`
-library(ggplot2)
-ggplot(datos, aes(x = 1:nrow(datos), y = `junin.temp_min`)) + geom_line()
+# library(ggplot2)
+# ggplot(datos, aes(x = 1:nrow(datos), y = `junin.temp_min`)) + geom_line()
 
 #' Convertimos a matrix los datos (floating-point matrix)
 #' Quito columna Date
 data <- data.matrix(datos)
 #' Normalizing the data
-train_data <- data[1:4000,]
+train_data <- data
 mean <- apply(train_data, 2, mean)
 std <- apply(train_data, 2, sd)
 data <- scale(data, center = mean, scale = std)
 
-#' Columna que nos interesa predecir
+#' IMPORTANTE
+#' Columna que nos interesa predecir. Importante, este variable es utilizada en varios lados.
 predictor.target <<- "junin.temp_min"
+predictor.colIndex <<- 5 # nro de columna en el dataset
 
 #' ## GLOSARY
 #' 
@@ -77,17 +80,17 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
 
 #' ## Preparing the training, validation, and test generators
 library(keras)
-#' Observations will go back 3 days
-lookback <- 5 
+#' Observations will go back lookback days
+lookback <- 2
 #' Observations will be sampled at one data point per hour.
 step <- 1
 #' Targets will be 24 hours in the future.
 delay <- 1
-batch_size <- 128
-MAX_INDEX_TRAIN_GEN <- 3800
-MIN_INDEX_VAL_GEN <- 3801
-MAX_INDEX_VAL_GEN <- 4660
-MIN_INDEX_VAL_TEST <- 4661
+batch_size <- 32
+MAX_INDEX_TRAIN_GEN <- 3762
+MIN_INDEX_VAL_GEN <- 3862
+MAX_INDEX_VAL_GEN <- 4000
+MIN_INDEX_VAL_TEST <- 4001
 train_gen <- generator(
   data,
   lookback = lookback,
@@ -120,12 +123,12 @@ val_steps <- (MAX_INDEX_VAL_GEN - MIN_INDEX_VAL_GEN - lookback) / batch_size
 test_steps <- (nrow(data) - MIN_INDEX_VAL_TEST - lookback) / batch_size
 
 #' ## Computing the common-sense baseline MAE
-#' 
+#' Simula un predictor aleatorio.
 evaluate_naive_method <- function() {
   batch_maes <- c()
   for (step in 1:val_steps) {
     c(samples, targets) %<-% val_gen()
-    preds <- samples[,dim(samples)[[2]],2]
+    preds <- samples[,dim(samples)[[2]],predictor.colIndex]
     mae <- mean(abs(preds - targets))
     batch_maes <- c(batch_maes, mae)
   }
@@ -136,7 +139,7 @@ evaluate_naive_method()
 # centered on 0 and have a standard deviation of 1, this number isn’t immediately inter-
 #  pretable. It translates to an average absolute error of 0.29 × temperature_std degrees
 # Celsius: 
-evaluate_naive_method()*std[predictor.target]
+evalnaive <- evaluate_naive_method()*std[predictor.target]
 #' ## Densenly connected model (neural network fully connected)
 #' Training and evaluating a densely connected model
 #' 
@@ -161,8 +164,8 @@ history <- model %>% fit_generator(
 )
 #' Ploting results
 plot(history)
-ggsave(paste("Densely-Connect-Model-","history.png",sep=""))  #' TODO SAVE MODEL!!!
-evaluation(model, samples, target, "Densely-Connect-Model-") 
+ggsave(paste("dacc-junin-Densely-Connect-Model-temp-hum-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+evaluation(model, samples, target, "dacc-junin-Densely-Connect-Model-temp-hum-") 
 #'
 #' ## [GRU] A first recurrent baseline
 #' Training and evaluating a model with layer_gru
