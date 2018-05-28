@@ -80,6 +80,7 @@ generator <- function(data, lookback, delay, min_index, max_index, shuffle = FAL
 
 #' ## Preparing the training, validation, and test generators
 library(keras)
+use_session_with_seed(42) # reproducible results
 #' Observations will go back #lookback days
 lookback <- 2
 #' Observations will be sampled at one data point per hour.
@@ -153,7 +154,8 @@ model <- keras_model_sequential() %>%
   layer_dense(units = 1)
 model %>% compile(
   optimizer = optimizer_rmsprop(),
-  loss = "mae"
+  loss = "mae",
+  metrics = c("mean_squared_error")
 )
 history <- model %>% fit_generator(
   train_gen,
@@ -162,9 +164,14 @@ history <- model %>% fit_generator(
   validation_data = val_gen,
   validation_steps = val_steps
 )
+
 #' Ploting results
 plot(history)
+
 ggsave(paste("dacc-junin-Densely-Connect-Model-temp-hum-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+#evaluate model result
+pred <- predict_generator(model,test_gen,steps = 10,verbose=1)
+results <- model %>% evaluate_generator(test_gen,steps = step)
 evaluation(model, samples, target, "dacc-junin-Densely-Connect-Model-temp-hum-") 
 #'
 #' ## [GRU] A first recurrent baseline
