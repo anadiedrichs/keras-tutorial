@@ -9,10 +9,10 @@ rmse <- function(y_true,y_pred){
 #' performance evaluation (errors in testset)
 evaluation <- function(model, samples, target, namePlot)
 {
-  pred <- as.vector(predict_on_batch(model,samples))
+  pred <- as.vector(predict(model,samples))
   # pasamos la info a grados Celsius
   pred.g <- pred * std[predictor.target]
-  target.g <- targets * std[predictor.target]
+  target.g <- target * std[predictor.target]
   #' Calculamos MAE y RMSE
   #' 
   mae <- mean_absolute_error(target.g, pred.g)
