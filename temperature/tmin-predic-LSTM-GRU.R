@@ -127,18 +127,18 @@ tt <- get_test_set(data, lookback, delay, MIN_INDEX_VAL_TEST, NULL, shuffle = FA
 
 #' Ploting results
 plot(history)
-
-ggsave(paste("dacc-junin-Densely-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+ggsave(paste("dacc-junin-Densely-radiacion-","history.png",sep=""))  
 #evaluate model result
 # bug reported on https://github.com/rstudio/keras/issues/414
 #pred <- predict_generator(model,test_gen,steps = 10,verbose=1)
 
-pred <- model %>% predict(tt$samples)
+#pred <- model %>% predict(tt$samples)
 print(model %>% evaluate_generator(test_gen,steps = step))
 evaluation(model=model, 
            samples=tt$samples, 
            target=tt$target, 
            namePlot="dacc-junin-Densely-radiacion-") 
+save_model_hdf5(model, "dacc-junin-Densely-radiacion.h5")
 
 print("======= GRU =========")
 
@@ -166,6 +166,7 @@ evaluation(model=model,
            samples=tt$samples, 
            target=tt$target, 
            namePlot="GRU-radiacion-") 
+save_model_hdf5(model, "GRU-radiacion-.h5")
 
 print("======= LSTM =========")
 
@@ -187,7 +188,6 @@ history <- model %>% fit_generator(
   validation_steps = val_steps
 )
 
-
 plot(history)
 ggsave(paste("LSTM-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
 evaluation(model=model, 
@@ -195,6 +195,7 @@ evaluation(model=model,
            target=tt$target, 
            namePlot="LSTM-radiacion-") 
 
+save_model_hdf5(model, "LSTM-radiacion-.h5")
 
 print("======= GRU + DROPOUT =========")
 
@@ -225,6 +226,7 @@ evaluation(model=model,
            target=tt$target, 
            namePlot="GRU-dropout-radiacion-") 
 
+save_model_hdf5(model, "GRU-dropout-radiacion-.h5")
 
 print("======= GRU + GRU + DROPOUT =========")
 
@@ -261,6 +263,11 @@ evaluation(model=model,
            samples=tt$samples, 
            target=tt$target, 
            namePlot="GRU-GRU-dropout-radiacion-") 
+save_model_hdf5(model, "GRU-GRU-radiacion-.h5")
+
+#' example to save and load a model
+#' save_model_hdf5(model, "my_model.h5")
+#' model <- load_model_hdf5("my_model.h5")
 
 #' # TODO sensitivity, precision, recall, etc
 #' 
