@@ -4,6 +4,7 @@ setwd("~/phd-repos/keras-tutorial/temperature")
 #' Cargamos el dataset 
 library(tibble)
 library(readr)
+library(ggplot2)
 source("models.R")
 dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/tmin/bnlearn/data/dacc-daily-tmin.csv"))
 head(dacc_daily_tmin)
