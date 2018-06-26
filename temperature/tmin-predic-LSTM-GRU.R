@@ -1,12 +1,13 @@
 #' # Prediciendo temperatura minima con LSTM GRU
 INIT <- Sys.time()
-setwd("~/phd-repos/keras-tutorial/temperature")
+#' setwd("~/phd-repos/keras-tutorial/temperature")
 #' Cargamos el dataset 
 library(tibble)
 library(readr)
 library(ggplot2)
 source("models.R")
-dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/tmin/bnlearn/data/dacc-daily-tmin.csv"))
+dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/bnlearn-continuous-prediction/data/dacc-daily-tmin.csv"))
+#dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/tmin/bnlearn/data/dacc-daily-tmin.csv"))
 head(dacc_daily_tmin)
 #' Para el experimento inicial tomamos solo un sensor, una ubicación
 #' 
@@ -28,8 +29,8 @@ nrow(datos)
 data <- data.matrix(datos)
 #' Normalizing the data
 train_data <- data
-mean <- apply(train_data, 2, mean)
-std <- apply(train_data, 2, sd)
+mean <<- apply(train_data, 2, mean)
+std <<- apply(train_data, 2, sd)
 data <- scale(data, center = mean, scale = std)
 
 #' IMPORTANTE
@@ -41,7 +42,7 @@ source("generator.R")
 
 #' ## Preparing the training, validation, and test generators
 library(keras)
-use_session_with_seed(42) # reproducible results
+use_session_with_seed(42,disable_gpu=FALSE) # reproducible results
 #' Observations will go back #lookback days
 lookback <- 2
 #' Observations will be sampled at one data point per hour.
