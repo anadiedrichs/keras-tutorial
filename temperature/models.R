@@ -21,8 +21,8 @@ evaluation <- function(model, samples, target, namePlot)
 {
   pred <- as.vector(predict(model,samples))
   # pasamos la info a grados Celsius
-  pred.g <- pred * std[predictor.target]
-  target.g <- target * std[predictor.target]
+  pred.g <- (pred * std[predictor.target]) + mean[predictor.target]
+  target.g <- (target * std[predictor.target])  + mean[predictor.target]
   #' Calculamos MAE y RMSE
   #' 
   mae <- mean_absolute_error(target.g, pred.g)
