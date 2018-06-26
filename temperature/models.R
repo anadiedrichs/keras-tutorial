@@ -1,11 +1,21 @@
 #' AUXILIAR FUNCTIONS
 #' metric_mean_absolute_error(y_true, y_pred)
+library(caret)
+RESULT_FILE <- "result-2018-06-26.csv"
+#R squared
+
+rsq <- function(x, y){ summary(lm(y~x))$r.squared } #tested
+
+# Function that returns Mean Absolute Error
 mean_absolute_error <- function(y_true,y_pred){
-  return(sum(abs(y_true-y_pred))/length(y_true))
+  mean(abs(y_true-y_pred))
 }
+
+# Function that returns Root Mean Squared Error
 rmse <- function(y_true,y_pred){
-  return(sqrt(sum((y_true-y_pred)^2)/length(y_true)))
+  sqrt(mean((y_true-y_pred)^2))
 }
+
 #' performance evaluation (errors in testset)
 evaluation <- function(model, samples, target, namePlot)
 {
@@ -17,6 +27,7 @@ evaluation <- function(model, samples, target, namePlot)
   #' 
   mae <- mean_absolute_error(target.g, pred.g)
   rmserror <- rmse(target.g, pred.g)
+  r2 <- rsq(target.g, pred.g)
   #' Graficar
   #' 
   resultados <- data.frame(index=1:length(pred.g),real=target.g,pred=pred.g)
@@ -30,11 +41,13 @@ evaluation <- function(model, samples, target, namePlot)
   #' 
   real.cut <- cut(target.g,breaks = c(-20,0,20))
   pred.cut <- cut(pred.g,breaks = c(-20,0,20))
-  t= data.frame(unclass(table(real.cut,pred.cut)))
-  write.csv(t,file=paste(namePlot,"-cm.csv",sep="")) #PROBAR
-  write.csv(cbind(c("MAE: ",mae),c("RMSE:",rmserror)),file = paste(namePlot,"-err.csv",sep="")) #PROBAR
+  c <- confusionMatrix(pred.cut,real.cut) # pasar pred and then truth or real values
+  #write.csv(t,file=paste(namePlot,"-cm.csv",sep="")) #PROBAR
+  #write.csv(cbind(c("MAE: ",mae),c("RMSE:",rmserror)),file = paste(namePlot,"-err.csv",sep="")) #PROBAR
   write.csv(cbind(pred.g,target.g),file = paste(namePlot,"-realVsPred.csv",sep="") ) #PROBAR
-  
+  res <- cbind(namePlot,mae,r2,rmserror,c$byClass["Sensitivity"],c$byClass["Precision"],c$table[1,1],c$table[1,2],c$table[2,2],c$table[2,1])
+  #write.csv(data.frame("dataset-config","mae","r2","rmse","recall","precision","TP","FP","TN","FN"),RESULT_FILE)
+  write.table(res, RESULT_FILE, sep = ",", col.names = F, append = T)
   return(c(mae = mae,rmse = rmserror, real = target.g, pred=pred.g))
   
 }

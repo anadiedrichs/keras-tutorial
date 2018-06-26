@@ -105,13 +105,16 @@ evalnaive <- evaluate_naive_method()*std[predictor.target]
 #' Vamos a probar el resultado de los modelos en el conjunto de testeo
 #' 
 #c(samples, targets) %<-% test_gen() #' cambian los datos regresados cada vez que lo llamo
+UNITS <- 16 # antes era 32
+write.table(data.frame("dataset-config","mae","r2","rmse","recall","precision","TP","FP","TN","FN")
+            , RESULT_FILE, sep = ",", col.names = F, append = F)
 print("======= DENSELY CONNECTED NETWORK =========")
 model <- keras_model_sequential() %>%
   layer_flatten(input_shape = c(lookback / step, dim(data)[-1])) %>%
-  layer_dense(units = 32, activation = "relu") %>%
+  layer_dense(units = UNITS, activation = "relu") %>%
   layer_dense(units = 1)
 model %>% compile(
-  optimizer = optimizer_rmsprop(),
+  optimizer = optimizer_adam(),
   loss = "mae",
   metrics = c("mean_squared_error")
 )
@@ -125,31 +128,26 @@ history <- model %>% fit_generator(
 
 #' Test set generation
 tt <- get_test_set(data, lookback, delay, MIN_INDEX_VAL_TEST, NULL, shuffle = FALSE, batch_size = batch_size, step = step)
-
+namefiles <- paste("junin-densenly",UNITS,"adam",sep="-")
 #' Ploting results
 plot(history)
-ggsave(paste("dacc-junin-Densely-radiacion-","history.png",sep=""))  
-#evaluate model result
-# bug reported on https://github.com/rstudio/keras/issues/414
-#pred <- predict_generator(model,test_gen,steps = 10,verbose=1)
-
-#pred <- model %>% predict(tt$samples)
+ggsave(paste(namefiles,"history.png",sep="-"))  
 print(model %>% evaluate_generator(test_gen,steps = step))
 evaluation(model=model, 
            samples=tt$samples, 
            target=tt$target, 
-           namePlot="dacc-junin-Densely-radiacion-") 
-save_model_hdf5(model, "dacc-junin-Densely-radiacion.h5")
+           namePlot=namefiles)
+save_model_hdf5(model, paste(namefiles,".h5",sep=""))
 
 print("======= GRU =========")
 
 #' ## [GRU] A first recurrent baseline
 #' Training and evaluating a model with layer_gru
 model <- keras_model_sequential() %>%
-  layer_gru(units = 32, input_shape = list(NULL, dim(data)[[-1]])) %>%
+  layer_gru(units = UNITS, input_shape = list(NULL, dim(data)[[-1]])) %>%
   layer_dense(units = 1)
 model %>% compile(
-  optimizer = optimizer_rmsprop(),
+  optimizer = optimizer_adam(),
   loss = "mae",
   metrics = c("mean_squared_error")
 )
@@ -161,23 +159,26 @@ history <- model %>% fit_generator(
   validation_steps = val_steps
 )
 
+namefiles <- paste("junin-GRU-",UNITS,"-adam",sep="")
+#' Ploting results
 plot(history)
-ggsave(paste("GRU-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+ggsave(paste(namefiles,"history.png",sep="-"))  
+print(model %>% evaluate_generator(test_gen,steps = step))
 evaluation(model=model, 
            samples=tt$samples, 
            target=tt$target, 
-           namePlot="GRU-radiacion-") 
-save_model_hdf5(model, "GRU-radiacion-.h5")
+           namePlot=namefiles)
+save_model_hdf5(model, paste(namefiles,".h5",sep=""))
 
 print("======= LSTM =========")
 
 #' ## [LSTM] Training and evaluating a model with layer_lstm
 #' 
 model <- keras_model_sequential() %>%
-  layer_lstm(units = 32, input_shape = list(NULL, dim(data)[[-1]])) %>%
+  layer_lstm(units = UNITS, input_shape = list(NULL, dim(data)[[-1]])) %>%
   layer_dense(units = 1)
 model %>% compile(
-  optimizer = optimizer_rmsprop(),
+  optimizer = optimizer_adam(),
   loss = "mae",
   metrics = c("mean_squared_error")
 )
@@ -189,25 +190,28 @@ history <- model %>% fit_generator(
   validation_steps = val_steps
 )
 
+namefiles <- paste("junin-LSTM",UNITS,"adam",sep="-")
+#' Ploting results
 plot(history)
-ggsave(paste("LSTM-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+ggsave(paste(namefiles,"history.png",sep="-"))  
+print(model %>% evaluate_generator(test_gen,steps = step))
 evaluation(model=model, 
            samples=tt$samples, 
            target=tt$target, 
-           namePlot="LSTM-radiacion-") 
+           namePlot=namefiles)
+save_model_hdf5(model, paste(namefiles,".h5",sep=""))
 
-save_model_hdf5(model, "LSTM-radiacion-.h5")
 
 print("======= GRU + DROPOUT =========")
 
 #' ## GRU + Dropout. Using recurrent dropout to fight overfitting
 #' Training and evaluating a dropout-regularized GRU-based model
 model <- keras_model_sequential() %>%
-  layer_gru(units = 32, dropout = 0.2, recurrent_dropout = 0.2,
+  layer_gru(units = UNITS, dropout = 0.2, recurrent_dropout = 0.2,
             input_shape = list(NULL, dim(data)[[-1]])) %>%
   layer_dense(units = 1)
 model %>% compile(
-  optimizer = optimizer_rmsprop(),
+  optimizer = optimizer_adam(),
   loss = "mae",
   metrics = c("mean_squared_error")
 )
@@ -220,14 +224,18 @@ history <- model %>% fit_generator(
 )
 
 
+
+namefiles <- paste("junin-GRU-dropout",UNITS,"adam",sep="-")
+#' Ploting results
 plot(history)
-ggsave(paste("GRU-dropout-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+ggsave(paste(namefiles,"history.png",sep="-"))  
+print(model %>% evaluate_generator(test_gen,steps = step))
 evaluation(model=model, 
            samples=tt$samples, 
            target=tt$target, 
-           namePlot="GRU-dropout-radiacion-") 
+           namePlot=namefiles)
+save_model_hdf5(model, paste(namefiles,".h5",sep=""))
 
-save_model_hdf5(model, "GRU-dropout-radiacion-.h5")
 
 print("======= GRU + GRU + DROPOUT =========")
 
@@ -235,17 +243,17 @@ print("======= GRU + GRU + DROPOUT =========")
 #'  Training and evaluating a dropout-regularized, stacked GRU model
 
 model <- keras_model_sequential() %>%
-  layer_gru(units = 32,
+  layer_gru(units = UNITS,
             dropout = 0.1,
             recurrent_dropout = 0.5,
             return_sequences = TRUE,
             input_shape = list(NULL, dim(data)[[-1]])) %>%
-  layer_gru(units = 64, activation = "relu",
+  layer_gru(units = UNITS, activation = "relu",
             dropout = 0.1,
             recurrent_dropout = 0.5) %>%
   layer_dense(units = 1)
 model %>% compile(
-  optimizer = optimizer_rmsprop(),
+  optimizer = optimizer_adam(),
   loss = "mae",
   metrics = c("mean_squared_error")
 )
@@ -257,14 +265,16 @@ history <- model %>% fit_generator(
   validation_steps = val_steps
 )
 
-
+namefiles <- paste("junin-GRU-GRU-dropout",UNITS,"adam",sep="-")
+#' Ploting results
 plot(history)
-ggsave(paste("GRU-GRU-dropout-radiacion-","history.png",sep=""))  #' TODO SAVE MODEL!!!
+ggsave(paste(namefiles,"history.png",sep="-"))  
+print(model %>% evaluate_generator(test_gen,steps = step))
 evaluation(model=model, 
            samples=tt$samples, 
            target=tt$target, 
-           namePlot="GRU-GRU-dropout-radiacion-") 
-save_model_hdf5(model, "GRU-GRU-radiacion-.h5")
+           namePlot=namefiles)
+save_model_hdf5(model, paste(namefiles,".h5",sep=""))
 
 #' example to save and load a model
 #' save_model_hdf5(model, "my_model.h5")
