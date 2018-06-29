@@ -6,8 +6,8 @@ library(tibble)
 library(readr)
 library(ggplot2)
 source("models.R")
-dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/bnlearn-continuous-prediction/data/dacc-daily-tmin.csv"))
-#dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/tmin/bnlearn/data/dacc-daily-tmin.csv"))
+#dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/bnlearn-continuous-prediction/data/dacc-daily-tmin.csv")) #netbook
+dacc_daily_tmin <- suppressWarnings(read_csv("~/phd-repos/tmin/bnlearn/data/dacc-daily-tmin.csv")) #server y dell
 head(dacc_daily_tmin)
 #' Para el experimento inicial tomamos solo un sensor, una ubicación
 #' 
@@ -29,10 +29,10 @@ nrow(datos)
 data <- data.matrix(datos)
 #' Normalizing the data
 train_data <- data
-mean <<- apply(train_data, 2, mean)
-std <<- apply(train_data, 2, sd)
+mean <- apply(train_data, 2, mean)
+std <- apply(train_data, 2, sd)
 data <- scale(data, center = mean, scale = std)
-
+EPOCH <- 50
 #' IMPORTANTE
 #' Columna que nos interesa predecir. Importante, este variable es utilizada en varios lados.
 predictor.target <<- "junin.temp_min"
@@ -44,7 +44,7 @@ source("generator.R")
 library(keras)
 use_session_with_seed(42,disable_gpu=FALSE) # reproducible results
 #' Observations will go back #lookback days
-lookback <- 2
+lookback <- 20
 #' Observations will be sampled at one data point per hour.
 step <- 1
 #' Targets will be 24 hours in the future.
@@ -106,7 +106,7 @@ evalnaive <- evaluate_naive_method()*std[predictor.target]
 #' Vamos a probar el resultado de los modelos en el conjunto de testeo
 #' 
 #c(samples, targets) %<-% test_gen() #' cambian los datos regresados cada vez que lo llamo
-UNITS <- 16 # antes era 32
+UNITS <- 64 # antes era 32
 write.table(data.frame("dataset-config","mae","r2","rmse","recall","precision","TP","FP","TN","FN")
             , RESULT_FILE, sep = ",", col.names = F, append = F)
 print("======= DENSELY CONNECTED NETWORK =========")
@@ -122,7 +122,7 @@ model %>% compile(
 history <- model %>% fit_generator(
   train_gen,
   steps_per_epoch = 500,
-  epochs = 20,
+  epochs = EPOCH,
   validation_data = val_gen,
   validation_steps = val_steps
 )
@@ -155,7 +155,7 @@ model %>% compile(
 history <- model %>% fit_generator(
   train_gen,
   steps_per_epoch = 500,
-  epochs = 20,
+  epochs = EPOCH,
   validation_data = val_gen,
   validation_steps = val_steps
 )
@@ -186,7 +186,7 @@ model %>% compile(
 history <- model %>% fit_generator(
   train_gen,
   steps_per_epoch = 500,
-  epochs = 20,
+  epochs = EPOCH,
   validation_data = val_gen,
   validation_steps = val_steps
 )
@@ -219,7 +219,7 @@ model %>% compile(
 history <- model %>% fit_generator(
   train_gen,
   steps_per_epoch = 500,
-  epochs = 40,
+  epochs = EPOCH*2,
   validation_data = val_gen,
   validation_steps = val_steps
 )
@@ -261,7 +261,7 @@ model %>% compile(
 history <- model %>% fit_generator(
   train_gen,
   steps_per_epoch = 500,
-  epochs = 40,
+  epochs = EPOCH*2,
   validation_data = val_gen,
   validation_steps = val_steps
 )
