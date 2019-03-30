@@ -1,7 +1,7 @@
 #' AUXILIAR FUNCTIONS
 #' metric_mean_absolute_error(y_true, y_pred)
 library(caret)
-RESULT_FILE <- "result-2018-06-26.csv"
+RESULT_FILE <- "result-2018-07-16.csv"
 #R squared
 
 rsq <- function(x, y){ summary(lm(y~x))$r.squared } #tested
